@@ -1,0 +1,31 @@
+name: Comment on new issues
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check issue labels and comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+          # Check labels
+          if echo "${{ toJSON(github.event.issue.labels) }}" | grep -q '"name":"bug"'; then
+            COMMENT="Thank you. We will fix it. Best regards, $REPO_OWNER."
+          elif echo "${{ toJSON(github.event.issue.labels) }}" | grep -q '"name":"feature"'; then
+            COMMENT="Thank you, we will consider to include this feature. Best regards, $REPO_OWNER."
+          elif echo "${{ toJSON(github.event.issue.labels) }}" | grep -q '"name":"discussion"'; then
+            COMMENT="Happy to discuss this topic with you. Best regards, $REPO_OWNER."
+          else
+            COMMENT="Hello, world!"
+          fi
+          
+          # Add comment using GitHub CLI
+          gh issue comment $ISSUE_NUMBER --body "$COMMENT" --repo ${{ github.repository }}
